@@ -14,11 +14,18 @@ services:
       service: rest
     depends_on:
       - rest-cache
+      - rest-db
 
   rest-cache:
     extends:
       file: docker-compose.base.yml
       service: rest-cache
 
+  rest-db:
+    extends:
+      file: docker-compose.base.yml
+      service: rest-db
+
 volumes:
   rest-cache-data:
+  rest-db-data:
