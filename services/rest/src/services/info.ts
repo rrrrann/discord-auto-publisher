@@ -2,15 +2,17 @@ import { StatusCodes } from 'http-status-codes';
 
 import { ResponseStatus, ServiceResponse } from '@/data/models/serviceResponse';
 
-import { Services } from '.';
+import { Logger } from './logger';
+import { RateLimitsCache } from './rateLimitsCache';
+import { MessagesQueue as Queue } from './crosspost/messagesQueue';
 
 /**
  * Get info about the crosspost service
  */
 const get = async () => {
   try {
-    const info = Services.Crosspost.Queue.getInfo();
-    const rateLimitsSize = await Services.RateLimitsCache.getSize();
+    const info = Queue.getInfo();
+    const rateLimitsSize = await RateLimitsCache.getSize();
 
     return new ServiceResponse(
       ResponseStatus.Success,
@@ -22,7 +24,7 @@ const get = async () => {
       StatusCodes.OK
     );
   } catch (error) {
-    Services.Logger.error(error);
+    Logger.error(error);
 
     return new ServiceResponse(ResponseStatus.Failed, 'Error getting info', null, StatusCodes.INTERNAL_SERVER_ERROR);
   }

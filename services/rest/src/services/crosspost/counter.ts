@@ -1,7 +1,7 @@
 import { Snowflake } from 'discord-api-types/globals';
 
 import { Data } from '@/data';
-import { Services } from '@/services';
+import { Logger } from '../logger';
 import { secToMin } from '@/utils/timeConversions';
 
 /**
@@ -14,11 +14,11 @@ const set = async (channelId: Snowflake, options?: { count?: number; expiry?: nu
   try {
     await Data.Repo.CrosspostsCounter.set(channelId, { ttl: options?.expiry, count: options?.count });
 
-    Services.Logger.debug(
+    Logger.debug(
       `Crossposts counter set for channel ${channelId}, count: ${options?.count || 0}, expiry: ${options?.expiry ? Math.round(secToMin(options?.expiry)) : 'default'}`
     );
   } catch (error) {
-    Services.Logger.error(error);
+    Logger.error(error);
   }
 };
 
@@ -69,7 +69,7 @@ const increment = async (channelId: Snowflake, expiry?: number) => {
     count: updatedCount,
     expiry: prevExpiry,
   });
-  Services.Logger.debug(`Channel ${channelId} incremented in the crossposts counter (count: ${updatedCount})`);
+  Logger.debug(`Channel ${channelId} incremented in the crossposts counter (count: ${updatedCount})`);
 };
 
 /**
@@ -82,7 +82,7 @@ const isOverLimit = async (channelId: Snowflake) => {
   const isOverLimit = count >= 10;
 
   if (isOverLimit) {
-    Services.Logger.debug(`Channel ${channelId} is over the crossposts limit`);
+    Logger.debug(`Channel ${channelId} is over the crossposts limit`);
   }
 
   return isOverLimit;

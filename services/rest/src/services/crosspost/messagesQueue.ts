@@ -2,7 +2,10 @@ import { DiscordSnowflake } from '@sapphire/snowflake';
 import { Snowflake } from 'discord-api-types/v10';
 import PQueue from 'p-queue';
 
-import { Services } from '@/services';
+import { Counter } from './counter';
+import { Handler } from './handler';
+import { Logger } from '../logger';
+import { RateLimitsCache } from '../rateLimitsCache';
 import { minToMs, msToSec, secToMs } from '@/utils/timeConversions';
 
 import { ChannelQueue } from './channelQueue';
@@ -43,12 +46,12 @@ class Queue {
   public async add(channelId: Snowflake, messageId: Snowflake, retries = 0) {
     // Check if the channel is over the crossposts limit
 
-    const isOverLimit = await Services.Crosspost.Counter.isOverLimit(channelId);
+    const isOverLimit = await Counter.isOverLimit(channelId);
     if (isOverLimit) return;
 
     // Check if the message has reached the max retries
     if (retries >= 10) {
-      Services.Logger.debug(`Message ${messageId} has reached the max retries`);
+      Logger.debug(`Message ${messageId} has reached the max retries`);
       return;
     }
 
@@ -71,10 +74,10 @@ class Queue {
    */
   private async _addToMainQueue(channelId: Snowflake, messageId: Snowflake, retries = 0) {
     // Check if the channel is over the crossposts limit
-    const isOverLimit = await Services.Crosspost.Counter.isOverLimit(channelId);
+    const isOverLimit = await Counter.isOverLimit(channelId);
     if (isOverLimit) return;
 
-    return this._queue.add(async () => Services.Crosspost.Handler.submit(channelId, messageId, retries), {
+    return this._queue.add(async () => Handler.submit(channelId, messageId, retries), {
       priority: this._getMessagePriority(messageId),
     });
   }
@@ -94,7 +97,7 @@ class Queue {
   private _newChannelQueue = (channelId: Snowflake) => {
     if (this._channelQueues.has(channelId)) return;
     this._channelQueues.set(channelId, new ChannelQueue());
-    Services.Logger.debug(`Created queue for channel ${channelId}`);
+    Logger.debug(`Created queue for channel ${channelId}`);
   };
 
   /**
@@ -110,7 +113,7 @@ class Queue {
    * Sweep inactive channel queues
    */
   private _sweepInactiveChannels() {
-    Services.Logger.debug('Sweeping inactive channel queues...');
+    Logger.debug('Sweeping inactive channel queues...');
     let count = 0;
     this._channelQueues.forEach((channel, channelId) => {
       if (channel.isInactive) {
@@ -118,7 +121,7 @@ class Queue {
         count++;
       }
     });
-    Services.Logger.debug(`Sweeped ${count} inactive channel queues`);
+    Logger.debug(`Sweeped ${count} inactive channel queues`);
   }
 
   /**
@@ -138,7 +141,7 @@ class Queue {
    * Check rate limits and pause/resume the queue
    */
   private async _rateLimitsCheck() {
-    const rateLimitSize = await Services.RateLimitsCache.getSize();
+    const rateLimitSize = await RateLimitsCache.getSize();
     if (this._queue.isPaused) {
       if (rateLimitSize < 8000 && this._queue.size === 0) {
         this.resume();
@@ -163,7 +166,7 @@ class Queue {
     this._timeout = setTimeout(() => {
       this.resume();
     }, duration);
-    Services.Logger.debug(`Messages queue paused for ${msToSec(duration)}s`);
+    Logger.debug(`Messages queue paused for ${msToSec(duration)}s`);
   }
 
   /**
@@ -175,7 +178,7 @@ class Queue {
       clearTimeout(this._timeout);
       this._timeout = null;
     }
-    Services.Logger.debug('Messages queue resumed');
+    Logger.debug('Messages queue resumed');
   }
 }
 

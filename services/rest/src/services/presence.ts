@@ -2,7 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 
 import { Data } from '@/data';
 import { ResponseStatus, ServiceResponse } from '@/data/models/serviceResponse';
-import { Services } from '@/services';
+import { Logger } from "../services/logger"
 
 /**
  * Get count of the bot client
@@ -23,7 +23,7 @@ const getCount = async (appId: string) => {
       StatusCodes.OK
     );
   } catch (error) {
-    Services.Logger.error(error);
+    Logger.error(error);
 
     return new ServiceResponse(
       ResponseStatus.Failed,
@@ -54,7 +54,7 @@ const getTotalCount = async () => {
       StatusCodes.OK
     );
   } catch (error) {
-    Services.Logger.error(error);
+    Logger.error(error);
 
     return new ServiceResponse(
       ResponseStatus.Failed,
@@ -87,7 +87,7 @@ const updateCount = async (appId: string, count: number) => {
       StatusCodes.OK
     );
   } catch (error) {
-    Services.Logger.error(error);
+    Logger.error(error);
 
     return new ServiceResponse(
       ResponseStatus.Failed,
